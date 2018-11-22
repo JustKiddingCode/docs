@@ -16,6 +16,52 @@ You will need one MySQL database with valid user, password and hostname handy du
 #. MariaDB 5.5 for Windows Server `64-bit <https://downloads.mariadb.org/interstitial/mariadb-5.5.37/winx64-packages/mariadb-5.5.37-winx64.msi/from/http://mirror.jmu.edu/pub/mariadb>`__ | `32-bit <https://downloads.mariadb.org/interstitial/mariadb-5.5.37/win32-packages/mariadb-5.5.37-win32.msi/from/http://mirror.jmu.edu/pub/mariadb>`__
 #. PHP Manager for IIS (makes managing PHP on IIS much easier) `here <http://phpmanager.codeplex.com/>`_
 
+**Using nginx**
+
+While not officially supported, it is possible to run osTicket on nginx.
+You will need a configuration like this::
+	location ~ /include {
+		deny all;
+	}
+
+	if ($request_uri ~ "^/api(/[^\?]+)") {
+		set $path_info $1;
+	}
+
+	location ~ ^/api/(?:tickets|tasks).*$ {
+		try_files $uri $uri/ /api/http.php?$query_string;
+	}
+
+	if ($request_uri ~ "^/scp/.*\.php(/[^\?]+)") {
+		set $path_info $1;
+	}
+
+	if ($request_uri ~ "^/.*\.php(/[^\?]+)") {
+		set $path_info $1;
+	}
+
+	location ~ ^/scp/ajax.php/.*$ {
+		try_files $uri $uri/ /scp/ajax.php?$query_string;
+	}
+
+	location ~ ^/ajax.php/.*$ {
+		try_files $uri $uri/ /ajax.php?$query_string;
+	}
+
+	location / {
+		try_files $uri $uri/ index.php;
+	}
+
+	location ~ \.php$ {
+	#	include snippets/fastcgi-php.conf;
+		fastcgi_param  SCRIPT_FILENAME  $document_root$fastcgi_script_name;
+		fastcgi_param  PATH_INFO        $path_info;
+		fastcgi_index  index.php;
+		fastcgi_pass   unix:/run/php/php7-osticket.sock;
+		include fastcgi.conf;
+	}
+
+
 Getting Started
 ---------------
 
